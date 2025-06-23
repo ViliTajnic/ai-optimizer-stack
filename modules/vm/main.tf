@@ -2,11 +2,15 @@
 # All rights reserved. The Universal Permissive License (UPL), Version 1.0 as shown at http://oss.oracle.com/licenses/upl
 # spell-checker: disable
 
-// Loadbalancer
+##############################
+# Load Balancer Backend Sets
+##############################
+
 resource "oci_load_balancer_backend_set" "cli_lb_bset" {
   load_balancer_id = var.lb_id
   name             = format("%s-cli-lb-set", var.label_prefix)
   policy           = "LEAST_CONNECTIONS"
+
   health_checker {
     port     = var.streamlit_client_port
     protocol = "HTTP"
@@ -18,12 +22,17 @@ resource "oci_load_balancer_backend_set" "srv_lb_bset" {
   load_balancer_id = var.lb_id
   name             = format("%s-srv-lb-set", var.label_prefix)
   policy           = "LEAST_CONNECTIONS"
+
   health_checker {
     port     = var.fastapi_server_port
     protocol = "HTTP"
     url_path = "/v1/liveness"
   }
 }
+
+########################
+# Load Balancer Listeners
+########################
 
 resource "oci_load_balancer_listener" "client_lb_listener" {
   load_balancer_id         = var.lb_id
@@ -41,6 +50,10 @@ resource "oci_load_balancer_listener" "server_lb_listener" {
   protocol                 = "HTTP"
 }
 
+########################
+# Load Balancer Backends
+########################
+
 resource "oci_load_balancer_backend" "client_lb_backend" {
   load_balancer_id = var.lb_id
   backendset_name  = oci_load_balancer_backend_set.cli_lb_bset.name
@@ -55,20 +68,20 @@ resource "oci_load_balancer_backend" "server_lb_backend" {
   port             = var.fastapi_server_port
 }
 
-// Compute Instance
+##############################
+# Compute Instance (CPU only)
+##############################
+
 resource "oci_core_instance" "instance" {
+  count               = var.vm_gpu_enabled ? 0 : 1
+  availability_domain = var.availability_domains[0]
   compartment_id      = var.compartment_id
   display_name        = format("%s-compute", var.label_prefix)
-  availability_domain = var.availability_domains[0]
+  shape               = var.compute_cpu_shape
 
-  shape = var.vm_gpu_enabled ? var.compute_gpu_shape : var.compute_cpu_shape
-
-  dynamic "shape_config" {
-    for_each = var.vm_gpu_enabled ? [] : [1]
-    content {
-      memory_in_gbs = var.compute_cpu_ocpu * 16
-      ocpus         = var.compute_cpu_ocpu
-    }
+  shape_config {
+    memory_in_gbs = var.compute_cpu_ocpu * 16
+    ocpus         = var.compute_cpu_ocpu
   }
 
   source_details {
@@ -81,6 +94,7 @@ resource "oci_core_instance" "instance" {
     are_all_plugins_disabled = false
     is_management_disabled   = false
     is_monitoring_disabled   = false
+
     plugins_config {
       desired_state = "ENABLED"
       name          = "Bastion"
@@ -103,17 +117,20 @@ resource "oci_core_instance" "instance" {
   }
 }
 
+##############################
+# GPU Compute Instance (optional)
+##############################
 
-// GPU Instance
 resource "oci_core_instance" "gpu_instance" {
   count               = var.vm_gpu_enabled ? 1 : 0
   availability_domain = var.availability_domain
   compartment_id      = var.compartment_id
+  display_name        = "gpu-instance-ai-optimizer"
   shape               = var.compute_gpu_shape
 
-  create_vnic_details {
-    subnet_id        = var.subnet_id
-    assign_public_ip = true
+  source_details {
+    source_type = "image"
+    # image_id = "<GPU_IMAGE_OCID>"
   }
 
   metadata = {
@@ -128,10 +145,15 @@ resource "oci_core_instance" "gpu_instance" {
     )
   }
 
-  source_details {
-    source_type = "image"
-    # image_id    = "<INSERT_GPU_IMAGE_OCID>"
+  create_vnic_details {
+    subnet_id        = var.private_subnet_id
+    assign_public_ip = false
+    nsg_ids          = [oci_core_network_security_group.compute.id]
   }
 
-  display_name = "gpu-instance-ai-optimizer"
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [source_details.0.source_id, defined_tags]
+  }
 }
+
