@@ -3,9 +3,9 @@
 # spell-checker: disable
 
 // Loadbalancer
-resource "oci_load_balancer_backend_set" "client_lb_backend_set" {
+resource "oci_load_balancer_backend_set" "cli_lb_bset" {
   load_balancer_id = var.lb_id
-  name             = format("%s-client-lb-backend-set", var.label_prefix)
+  name             = format("%s-cli-lb-set", var.label_prefix)
   policy           = "LEAST_CONNECTIONS"
   health_checker {
     port     = var.streamlit_client_port
@@ -14,9 +14,9 @@ resource "oci_load_balancer_backend_set" "client_lb_backend_set" {
   }
 }
 
-resource "oci_load_balancer_backend_set" "server_lb_backend_set" {
+resource "oci_load_balancer_backend_set" "srv_lb_bset" {
   load_balancer_id = var.lb_id
-  name             = format("%s-server-lb-backend-set", var.label_prefix)
+  name             = format("%s-srv-lb-set", var.label_prefix)
   policy           = "LEAST_CONNECTIONS"
   health_checker {
     port     = var.fastapi_server_port
@@ -28,7 +28,7 @@ resource "oci_load_balancer_backend_set" "server_lb_backend_set" {
 resource "oci_load_balancer_listener" "client_lb_listener" {
   load_balancer_id         = var.lb_id
   name                     = format("%s-client-lb-listener", var.label_prefix)
-  default_backend_set_name = oci_load_balancer_backend_set.client_lb_backend_set.name
+  default_backend_set_name = oci_load_balancer_backend_set.cli_lb_bset.name
   port                     = var.lb_client_port
   protocol                 = "HTTP"
 }
@@ -36,21 +36,21 @@ resource "oci_load_balancer_listener" "client_lb_listener" {
 resource "oci_load_balancer_listener" "server_lb_listener" {
   load_balancer_id         = var.lb_id
   name                     = format("%s-server-lb-listener", var.label_prefix)
-  default_backend_set_name = oci_load_balancer_backend_set.server_lb_backend_set.name
+  default_backend_set_name = oci_load_balancer_backend_set.srv_lb_bset.name
   port                     = var.lb_server_port
   protocol                 = "HTTP"
 }
 
 resource "oci_load_balancer_backend" "client_lb_backend" {
   load_balancer_id = var.lb_id
-  backendset_name  = oci_load_balancer_backend_set.client_lb_backend_set.name
+  backendset_name  = oci_load_balancer_backend_set.cli_lb_bset.name
   ip_address       = oci_core_instance.instance.private_ip
   port             = var.streamlit_client_port
 }
 
 resource "oci_load_balancer_backend" "server_lb_backend" {
   load_balancer_id = var.lb_id
-  backendset_name  = oci_load_balancer_backend_set.server_lb_backend_set.name
+  backendset_name  = oci_load_balancer_backend_set.srv_lb_bset.name
   ip_address       = oci_core_instance.instance.private_ip
   port             = var.fastapi_server_port
 }
