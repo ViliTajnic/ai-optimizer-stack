@@ -60,7 +60,8 @@ resource "oci_core_instance" "instance" {
   compartment_id      = var.compartment_id
   display_name        = format("%s-compute", var.label_prefix)
   availability_domain = var.availability_domains[0]
-  shape               = var.vm_gpu_enabled ? var.compute_gpu_shape : var.compute_cpu_shape
+
+  shape = var.vm_gpu_enabled ? var.compute_gpu_shape : var.compute_cpu_shape
 
   dynamic "shape_config" {
     for_each = var.vm_gpu_enabled ? [] : [1]
@@ -101,6 +102,7 @@ resource "oci_core_instance" "instance" {
     ignore_changes        = [source_details.0.source_id, defined_tags]
   }
 }
+
 
 // GPU Instance
 resource "oci_core_instance" "gpu_instance" {
