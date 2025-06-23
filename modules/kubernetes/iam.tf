@@ -3,7 +3,7 @@
 # spell-checker: disable
 
 resource "oci_identity_dynamic_group" "workers_dynamic_group" {
-  compartment_id = var.tenancy_id
+  compartment_id = var.tenancy_ocid
   name           = format("%s-worker-dyngrp", var.label_prefix)
   description    = format("%s Workers Dynamic Group", var.label_prefix)
   matching_rule = format(
@@ -13,7 +13,7 @@ resource "oci_identity_dynamic_group" "workers_dynamic_group" {
 }
 
 resource "oci_identity_policy" "workers_policies" {
-  compartment_id = var.tenancy_id
+  compartment_id = var.tenancy_ocid
   name           = format("%s-workers-policy", var.label_prefix)
   description    = format("%s - K8s Workers", var.label_prefix)
   statements = [

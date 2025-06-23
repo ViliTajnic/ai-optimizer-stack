@@ -6,7 +6,7 @@
 # Dynamic Group for Compute Instances
 # ---------------------------------------------
 resource "oci_identity_dynamic_group" "compute_dyn_grp" {
-  compartment_id = var.tenancy_id
+  compartment_id = var.tenancy_ocid
   name           = format("%s-compute-dyn-grp", var.label_prefix)
   description    = "Dynamic group for compute instances in this stack"
 

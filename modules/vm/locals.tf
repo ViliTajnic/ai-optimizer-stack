@@ -4,7 +4,7 @@
 
 locals {
   cloud_init = templatefile("${path.module}/templates/cloudinit-compute.tpl", {
-    tenancy_id     = var.tenancy_id
+    tenancy_id     = var.tenancy_ocid
     compartment_id = var.compartment_id
     oci_region     = var.region
     db_name        = var.adb_name
