@@ -3,7 +3,8 @@
 # spell-checker: disable
 
 variable "tenancy_id" {
-  type = string
+  description = "Tenancy OCID"
+  type        = string
 }
 
 variable "compartment_id" {
@@ -99,6 +100,7 @@ variable "tenancy_ocid" {
   description = "The OCID of the tenancy."
   type        = string
 }
+
 
 /*
 variable "ssh_public_key" {
