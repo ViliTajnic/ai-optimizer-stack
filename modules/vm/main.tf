@@ -60,16 +60,22 @@ resource "oci_core_instance" "instance" {
   compartment_id      = var.compartment_id
   display_name        = format("%s-compute", var.label_prefix)
   availability_domain = var.availability_domains[0]
-  shape = var.vm_gpu_enabled ? var.compute_gpu_shape : var.compute_cpu_shape
-  shape_config {
-    memory_in_gbs = var.compute_cpu_ocpu * 16
-    ocpus         = var.compute_cpu_ocpu
+  shape               = var.vm_gpu_enabled ? var.compute_gpu_shape : var.compute_cpu_shape
+
+  dynamic "shape_config" {
+    for_each = var.vm_gpu_enabled ? [] : [1]
+    content {
+      memory_in_gbs = var.compute_cpu_ocpu * 16
+      ocpus         = var.compute_cpu_ocpu
+    }
   }
+
   source_details {
     source_type             = "image"
     source_id               = data.oci_core_images.images.images[0].id
     boot_volume_size_in_gbs = 50
   }
+
   agent_config {
     are_all_plugins_disabled = false
     is_management_disabled   = false
@@ -79,14 +85,17 @@ resource "oci_core_instance" "instance" {
       name          = "Bastion"
     }
   }
+
   create_vnic_details {
     subnet_id        = var.private_subnet_id
     assign_public_ip = false
     nsg_ids          = [oci_core_network_security_group.compute.id]
   }
+
   metadata = {
-    user_data = "${base64encode(local.cloud_init)}"
+    user_data = base64encode(local.cloud_init)
   }
+
   lifecycle {
     create_before_destroy = true
     ignore_changes        = [source_details.0.source_id, defined_tags]
@@ -106,7 +115,6 @@ resource "oci_core_instance" "gpu_instance" {
   }
 
   metadata = {
-    #ssh_authorized_keys = var.ssh_public_key
     user_data = base64encode(<<-EOT
       #!/bin/bash
       yum -y install kernel-devel-$(uname -r) gcc make
@@ -125,4 +133,3 @@ resource "oci_core_instance" "gpu_instance" {
 
   display_name = "gpu-instance-ai-optimizer"
 }
-
