@@ -95,6 +95,11 @@ variable "compute_gpu_shape" {
   type        = string
 }
 
+variable "tenancy_ocid" {
+  description = "The OCID of the tenancy."
+  type        = string
+}
+
 /*
 variable "ssh_public_key" {
   description = "SSH Public Key for accessing the VM"

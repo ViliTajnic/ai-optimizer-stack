@@ -3,6 +3,31 @@
 # spell-checker: disable
 
 # ---------------------------------------------
+# Load Balancer Backend Sets
+# ---------------------------------------------
+resource "oci_load_balancer_backend_set" "cli_lb_bset" {
+  load_balancer_id = var.lb_id
+  name             = format("%s-cli-lb-set", var.label_prefix)
+  policy           = "LEAST_CONNECTIONS"
+  health_checker {
+    port     = var.streamlit_client_port
+    protocol = "HTTP"
+    url_path = "/_stcore/health"
+  }
+}
+
+resource "oci_load_balancer_backend_set" "srv_lb_bset" {
+  load_balancer_id = var.lb_id
+  name             = format("%s-srv-lb-set", var.label_prefix)
+  policy           = "LEAST_CONNECTIONS"
+  health_checker {
+    port     = var.fastapi_server_port
+    protocol = "HTTP"
+    url_path = "/v1/liveness"
+  }
+}
+
+# ---------------------------------------------
 # Load Balancer Backends (Only for CPU Instances)
 # ---------------------------------------------
 resource "oci_load_balancer_backend" "cli_lb_backend" {
@@ -70,10 +95,12 @@ resource "oci_core_instance" "gpuinst" {
   availability_domain = var.availability_domain
   compartment_id      = var.compartment_id
   shape               = var.compute_gpu_shape
+
   create_vnic_details {
     subnet_id        = var.subnet_id
     assign_public_ip = true
   }
+
   metadata = {
     user_data = base64encode(<<-EOT
       #!/bin/bash
@@ -85,8 +112,10 @@ resource "oci_core_instance" "gpuinst" {
     EOT
     )
   }
+
   source_details {
     source_type = "image"
   }
+
   display_name = "gpu-instance-ai-optimizer"
 }
