@@ -1,1 +1,1 @@
-zip -r ai-opt.zip . -x "terraform*" ".terraform*" "*/terraform*" "*/.terraform*" "generated/*.*"
+zip -r ai-optimizer-stack.zip . -x "terraform*" ".terraform*" "*/terraform*" "*/.terraform*" "generated/*.*"
