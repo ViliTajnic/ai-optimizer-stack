@@ -4,7 +4,7 @@
 
 # CPU images data source
 data "oci_core_images" "images" {
-  compartment_id   = var.compartment_id
+  compartment_id   = var.compartment_ocid
   operating_system = "Oracle Linux"
   shape            = var.vm_gpu_enabled ? "VM.Standard.E4.Flex" : var.compute_shape
 
@@ -20,7 +20,7 @@ data "oci_core_images" "images" {
 
 # GPU images data source
 data "oci_core_images" "gpu_images" {
-  compartment_id   = var.compartment_id
+  compartment_id   = var.compartment_ocid
   operating_system = "Oracle Linux"
   shape            = "VM.GPU.A10.1"
 

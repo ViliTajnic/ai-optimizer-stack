@@ -45,7 +45,7 @@ resource "oci_load_balancer_listener" "server_lb_listener" {
 // Compute Instance - CPU Only (when GPU is disabled)
 resource "oci_core_instance" "cpu_instance" {
   count               = var.vm_gpu_enabled ? 0 : 1
-  compartment_id      = var.compartment_id
+  compartment_id      = var.compartment_ocid
   availability_domain = var.availability_domains[0]
   display_name        = format("%s-cpu-instance", var.label_prefix)
   shape               = var.compute_shape
@@ -83,7 +83,7 @@ resource "oci_core_instance" "cpu_instance" {
 // Compute Instance - GPU Only (when GPU is enabled)
 resource "oci_core_instance" "gpu_instance" {
   count               = var.vm_gpu_enabled ? 1 : 0
-  compartment_id      = var.compartment_id
+  compartment_id      = var.compartment_ocid
   availability_domain = var.gpu_availability_domain != "" ? var.gpu_availability_domain : var.availability_domains[0]
   display_name        = format("%s-gpu-instance", var.label_prefix)
   shape               = var.compute_shape
