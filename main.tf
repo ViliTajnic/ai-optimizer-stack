@@ -78,8 +78,8 @@ resource "oci_database_autonomous_database" "default_adb" {
 
 // Virtual Machine
 module "vm" {
-  count = var.infrastructure == "VM" || var.vm_gpu_enabled ? 1 : 0
-  # count                 = var.infrastructure == "VM" ? 1 : 0
+  count = var.infrastructure == "VM" ? 1 : 0
+  
   source                = "./modules/vm"
   label_prefix          = local.label_prefix
   tenancy_id            = var.tenancy_ocid
@@ -95,25 +95,19 @@ module "vm" {
   fastapi_server_port   = local.fastapi_server_port
   compute_os_ver        = var.compute_os_ver
   compute_cpu_ocpu      = var.compute_cpu_ocpu
-  compute_cpu_shape     = var.vm_gpu_enabled ? "VM.GPU.A10.1" : var.compute_cpu_shape
-  compute_gpu_shape     = var.compute_gpu_shape
-  # compute_cpu_shape   = var.compute_cpu_shape
+  
+  # Conditional shape selection - GPU overrides CPU
+  compute_shape         = var.vm_gpu_enabled ? var.compute_gpu_shape : var.compute_cpu_shape
+  vm_gpu_enabled        = var.vm_gpu_enabled
+  
   availability_domains  = local.availability_domains
   private_subnet_id     = module.network.private_subnet_ocid
   availability_domain   = local.availability_domains[0]
   subnet_id             = module.network.private_subnet_ocid
-  # ssh_public_key      = var.ssh_public_key
+  
   providers = {
     oci.home_region = oci.home_region
   }
-  /* Add these for GPU support
-  availability_domain   = var.availability_domain
-  subnet_id             = var.subnet_id
-  ssh_public_key        = var.ssh_public_key
-  vm_gpu_enabled        = var.vm_gpu_enabled
-  providers = {
-    oci.home_region = oci.home_region
-  }*/
 }
 
 // Kubernetes

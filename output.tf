@@ -39,6 +39,10 @@ output "helm_values" {
 
 output "gpu_instance_public_ip" {
   description = "Public IP of GPU instance (if enabled)"
-  value       = try(module.vm.gpu_instance_public_ip, null)
+  value       = var.infrastructure == "VM" && length(module.vm) > 0 ? module.vm[0].gpu_instance_public_ip : null
 }
 
+output "instance_details" {
+  description = "Compute instance details"
+  value       = var.infrastructure == "VM" && length(module.vm) > 0 ? module.vm[0].instance_details : null
+}

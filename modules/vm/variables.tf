@@ -75,7 +75,7 @@ variable "use_gpu" {
 }
 
 variable "vm_gpu_enabled" {
-  description = "This will enable VM with GPU"
+  description = "Enable GPU instance instead of CPU instance"
   type        = bool
   default     = false
 }
@@ -93,6 +93,23 @@ variable "subnet_id" {
 variable "compute_gpu_shape" {
   description = "The shape of the GPU instance"
   type        = string
+}
+
+variable "compute_shape" {
+  description = "The compute shape to use (CPU or GPU based on selection)"
+  type        = string
+}
+
+variable "gpu_availability_domain" {
+  description = "Specific availability domain for GPU instances"
+  type        = string
+  default     = ""
+}
+
+variable "gpu_subnet_id" {
+  description = "Specific subnet for GPU instances"
+  type        = string
+  default     = ""
 }
 
 /*

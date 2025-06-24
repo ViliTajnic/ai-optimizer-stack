@@ -30,3 +30,48 @@ data "oci_core_services" "core_services" {
     regex  = true
   }
 }
+
+# Existing CPU images data source
+data "oci_core_images" "images" {
+  compartment_id   = var.compartment_id
+  operating_system = "Oracle Linux"
+  shape            = var.vm_gpu_enabled ? "VM.Standard.E4.Flex" : var.compute_shape
+
+  filter {
+    name   = "display_name"
+    values = ["Oracle-Linux-${var.compute_os_ver}-.*"]
+    regex  = true
+  }
+
+  sort_by    = "TIMECREATED"
+  sort_order = "DESC"
+}
+
+# New GPU images data source
+data "oci_core_images" "gpu_images" {
+  compartment_id   = var.compartment_id
+  operating_system = "Oracle Linux"
+  shape            = "VM.GPU.A10.1"  # Use a GPU shape to filter for GPU-compatible images
+
+  filter {
+    name   = "display_name"
+    values = ["Oracle-Linux-${var.compute_os_ver}-.*GPU.*", "Oracle-Linux-${var.compute_os_ver}-.*"]
+    regex  = true
+  }
+
+  sort_by    = "TIMECREATED"
+  sort_order = "DESC"
+}
+
+# Existing data sources remain the same
+data "oci_core_vcn" "vcn" {
+  vcn_id = var.vcn_id
+}
+
+data "oci_core_services" "core_services" {
+  filter {
+    name   = "name"
+    values = ["All .* Services In Oracle Services Network"]
+    regex  = true
+  }
+}

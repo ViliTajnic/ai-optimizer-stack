@@ -147,13 +147,24 @@ variables:
     maximum: 80
     multipleOf: 1
 
-#  compute_cpu_shape:
-#   type: enum
-#   title: "CPU Node Pool Worker Shape"
-#   required: true
-#   enum:
-#     - "VM.Standard.E5.Flex"
-#     - "VM.Standard.E4.Flex"
+  # CPU Shape (Visible when GPU is disabled)
+  compute_cpu_shape:
+    type: enum
+    title: "CPU Instance Shape"
+    description: "Select CPU instance shape for non-GPU workloads"
+    required: true
+    default: "VM.Standard.E5.Flex"
+    enum:
+      - "VM.Standard.E5.Flex"
+      - "VM.Standard.E4.Flex"
+      - "VM.Standard3.Flex"
+    visible:
+      and:
+        - eq:
+          - infrastructure
+          - "VM"
+        - not:
+          - vm_gpu_enabled
 
 
   compute_cpu_ocpu:
@@ -169,39 +180,40 @@ variables:
     title: "Deploy GPU Node Pool?"
     required: true
 
-#
-# compute_gpu_shape:
-#   type: enum
-#   title: "Node Pool Worker Shape"
-#   required: true
-#   default: "VM.GPU.A10.1"
-#   enum:
-#     - "VM.GPU.A10.1"
-#     - "VM.GPU.A10.2"
-#   visible: k8s_node_pool_gpu_deploy
 
-# CPU Shape (Visible when GPU is disabled)
-  compute_cpu_shape:
-    type: enum
-    title: "CPU Node Pool Worker Shape"
-    required: true
-    enum:
-      - "VM.Standard.E5.Flex"
-      - "VM.Standard.E4.Flex"
-    visible:
-      not:
-        var: vm_gpu_enabled
-
-# GPU Shape (Visible when GPU is enabled)
+  # GPU Shape (Visible when GPU is enabled)
   compute_gpu_shape:
     type: enum
-    title: "GPU Node Pool Worker Shape"
+    title: "GPU Instance Shape"
+    description: "Select GPU instance shape for AI/ML workloads"
     required: true
+    default: "VM.GPU.A10.1"
     enum:
       - "VM.GPU.A10.1"
       - "VM.GPU.A10.2"
     visible:
-      var: vm_gpu_enabled
+      and:
+        - eq:
+          - infrastructure
+          - "VM"
+        - vm_gpu_enabled
+
+  compute_cpu_ocpu:
+    type: integer
+    title: "CPU Core Count"
+    description: "Number of OCPUs for flexible CPU shapes"
+    required: true
+    minimum: 1
+    maximum: 64
+    multipleOf: 1
+    default: 2
+    visible:
+      and:
+        - eq:
+          - infrastructure
+          - "VM"
+        - not:
+          - vm_gpu_enabled
 
   k8s_gpu_node_pool_size:
     type: integer
@@ -217,7 +229,9 @@ variables:
   vm_gpu_enabled:
     type: boolean
     title: "Enable GPU instance"
+    description: "Use GPU-enabled compute instance instead of CPU instance"
     required: true
+    default: false
 
   lb_min_shape:
     type: integer
