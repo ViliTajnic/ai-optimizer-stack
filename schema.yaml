@@ -109,7 +109,7 @@ variables:
   label_prefix:
     type: string
     title: "Application Name"
-    pattern: "^$|^[a-zA-Z0-9]{1,8}$"
+    pattern: "^$|^[a-zA-Z0-9]{1,12}$"
     required: false
 
   infrastructure:

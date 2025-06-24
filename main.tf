@@ -21,11 +21,9 @@ resource "random_password" "adb_rest" {
   min_special      = 2
   override_special = "!$%^*-_"
   keepers = {
-    uuid = "uuid()"
+    uuid = uuid()
   }
 }
-
-
 
 // Network
 module "network" {
@@ -104,6 +102,17 @@ module "vm" {
   private_subnet_id     = module.network.private_subnet_ocid
   availability_domain   = local.availability_domains[0]
   subnet_id             = module.network.private_subnet_ocid
+  
+  # GPU-specific variables
+  gpu_driver_version     = var.gpu_driver_version
+  cuda_version          = var.cuda_version
+  pytorch_cuda_version  = var.pytorch_cuda_version
+  ollama_gpu_layers     = var.ollama_gpu_layers
+  enable_gpu_monitoring = var.enable_gpu_monitoring
+  default_embedding_model = var.default_embedding_model
+  default_chat_model    = var.default_chat_model
+  enable_cuda_cache     = var.enable_cuda_cache
+  gpu_boot_volume_size  = var.gpu_boot_volume_size
   
   providers = {
     oci.home_region = oci.home_region
