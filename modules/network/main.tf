@@ -17,7 +17,7 @@ resource "oci_core_vcn" "vcn" {
 // Lock Down Default Sec List
 resource "oci_core_default_security_list" "lockdown" {
   compartment_id             = oci_core_vcn.vcn.compartment_id
-  display_name               = format("%s-default-sec-list", var.label_prefix)
+  display_name               = format("%s-def-sec-list", var.label_prefix)
   manage_default_resource_id = oci_core_vcn.vcn.default_security_list_id
   egress_security_rules {
     description      = "Egress for Bastion Access"
@@ -37,7 +37,7 @@ resource "oci_core_internet_gateway" "igw" {
 }
 
 resource "oci_core_default_route_table" "public_route_table" {
-  display_name = format("%s-public-route-table", var.label_prefix)
+  display_name = format("%s-pub-rt", var.label_prefix)
   route_rules {
     description       = "traffic to/from internet"
     destination       = "0.0.0.0/0"
@@ -82,7 +82,7 @@ resource "oci_core_nat_gateway" "ngw" {
 resource "oci_core_route_table" "private_route_table" {
   compartment_id = oci_core_vcn.vcn.compartment_id
   vcn_id         = oci_core_vcn.vcn.id
-  display_name   = format("%s-private-route-table", var.label_prefix)
+  display_name   = format("%s-priv-rt", var.label_prefix)
   route_rules {
     description       = "traffic to the internet"
     destination       = "0.0.0.0/0"

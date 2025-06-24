@@ -13,7 +13,7 @@ locals {
   adb_name = format("%sDB", upper(local.label_prefix))
   adb_whitelist_cidrs = concat(
     var.adb_whitelist_cidrs != "" ? split(",", replace(var.adb_whitelist_cidrs, "/\\s+/", "")) : [],
-    [module.network.vcn_ocid]
+    [module.network.vcn_cidr_block]
   )
   adb_password = sensitive(format("%s%s", random_password.adb_char.result, random_password.adb_rest.result))
 }
