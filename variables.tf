@@ -195,7 +195,7 @@ variable "gpu_subnet_id" {
   default     = ""
 }
 
-// Kubernetes
+// Kubernetes Variables (Required by modules)
 variable "k8s_version" {
   description = "The version of Kubernetes to install into the cluster masters."
   type        = string
@@ -235,7 +235,7 @@ variable "k8s_gpu_node_pool_size" {
   default     = 1
 }
 
-// LoadBalancer
+// LoadBalancer Variables (Required)
 variable "lb_min_shape" {
   description = "LoadBalancer minimum bandwidth (Mbps)."
   type        = number
@@ -248,7 +248,7 @@ variable "lb_max_shape" {
   default     = 10
 }
 
-// NSGs
+// NSG Variables (Required)
 variable "client_allowed_cidrs" {
   description = "Comma separated string of CIDR blocks from which the application client can be accessed."
   type        = string
