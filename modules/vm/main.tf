@@ -2,7 +2,7 @@
 # All rights reserved. The Universal Permissive License (UPL), Version 1.0 as shown at http://oss.oracle.com/licenses/upl
 # spell-checker: disable
 
-// Loadbalancer
+// Loadbalancer Backend Sets
 resource "oci_load_balancer_backend_set" "client_lb_backend_set" {
   load_balancer_id = var.lb_id
   name             = format("%s-client-lb-backend-set", var.label_prefix)
@@ -25,6 +25,7 @@ resource "oci_load_balancer_backend_set" "server_lb_backend_set" {
   }
 }
 
+// Load Balancer Listeners
 resource "oci_load_balancer_listener" "client_lb_listener" {
   load_balancer_id         = var.lb_id
   name                     = format("%s-client-lb-listener", var.label_prefix)
@@ -39,22 +40,6 @@ resource "oci_load_balancer_listener" "server_lb_listener" {
   default_backend_set_name = oci_load_balancer_backend_set.server_lb_backend_set.name
   port                     = var.lb_server_port
   protocol                 = "HTTP"
-}
-
-resource "oci_load_balancer_backend" "client_lb_backend" {
-  count            = var.vm_gpu_enabled ? 0 : 1
-  load_balancer_id = var.lb_id
-  backendset_name  = oci_load_balancer_backend_set.client_lb_backend_set.name
-  ip_address       = oci_core_instance.instance[0].private_ip
-  port             = var.streamlit_client_port
-}
-
-resource "oci_load_balancer_backend" "server_lb_backend" {
-  count            = var.vm_gpu_enabled ? 0 : 1
-  load_balancer_id = var.lb_id
-  backendset_name  = oci_load_balancer_backend_set.server_lb_backend_set.name
-  ip_address       = oci_core_instance.instance[0].private_ip
-  port             = var.fastapi_server_port
 }
 
 // Compute Instance - CPU Only (when GPU is disabled)
@@ -95,23 +80,6 @@ resource "oci_core_instance" "cpu_instance" {
   }
 }
 
-// Load Balancer Backends - CPU Instance
-resource "oci_load_balancer_backend" "client_lb_backend_cpu" {
-  count            = var.vm_gpu_enabled ? 0 : 1
-  load_balancer_id = var.lb_id
-  backendset_name  = oci_load_balancer_backend_set.client_lb_backend_set.name
-  ip_address       = oci_core_instance.cpu_instance[0].private_ip
-  port             = var.streamlit_client_port
-}
-
-resource "oci_load_balancer_backend" "server_lb_backend_cpu" {
-  count            = var.vm_gpu_enabled ? 0 : 1
-  load_balancer_id = var.lb_id
-  backendset_name  = oci_load_balancer_backend_set.server_lb_backend_set.name
-  ip_address       = oci_core_instance.cpu_instance[0].private_ip
-  port             = var.fastapi_server_port
-}
-
 // Compute Instance - GPU Only (when GPU is enabled)
 resource "oci_core_instance" "gpu_instance" {
   count               = var.vm_gpu_enabled ? 1 : 0
@@ -125,7 +93,7 @@ resource "oci_core_instance" "gpu_instance" {
   source_details {
     source_type             = "image"
     source_id               = data.oci_core_images.gpu_images.images[0].id
-    boot_volume_size_in_gbs = 100  # Larger boot volume for GPU workloads
+    boot_volume_size_in_gbs = 100
   }
 
   create_vnic_details {
@@ -144,6 +112,23 @@ resource "oci_core_instance" "gpu_instance" {
   }
 }
 
+// Load Balancer Backends - CPU Instance
+resource "oci_load_balancer_backend" "client_lb_backend_cpu" {
+  count            = var.vm_gpu_enabled ? 0 : 1
+  load_balancer_id = var.lb_id
+  backendset_name  = oci_load_balancer_backend_set.client_lb_backend_set.name
+  ip_address       = oci_core_instance.cpu_instance[0].private_ip
+  port             = var.streamlit_client_port
+}
+
+resource "oci_load_balancer_backend" "server_lb_backend_cpu" {
+  count            = var.vm_gpu_enabled ? 0 : 1
+  load_balancer_id = var.lb_id
+  backendset_name  = oci_load_balancer_backend_set.server_lb_backend_set.name
+  ip_address       = oci_core_instance.cpu_instance[0].private_ip
+  port             = var.fastapi_server_port
+}
+
 // Load Balancer Backends - GPU Instance
 resource "oci_load_balancer_backend" "client_lb_backend_gpu" {
   count            = var.vm_gpu_enabled ? 1 : 0
@@ -160,4 +145,3 @@ resource "oci_load_balancer_backend" "server_lb_backend_gpu" {
   ip_address       = oci_core_instance.gpu_instance[0].private_ip
   port             = var.fastapi_server_port
 }
-

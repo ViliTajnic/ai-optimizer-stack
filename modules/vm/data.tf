@@ -22,11 +22,11 @@ data "oci_core_images" "images" {
 data "oci_core_images" "gpu_images" {
   compartment_id   = var.compartment_id
   operating_system = "Oracle Linux"
-  shape            = "VM.GPU.A10.1"  # Use a GPU shape to filter for GPU-compatible images
+  shape            = "VM.GPU.A10.1"
 
   filter {
     name   = "display_name"
-    values = ["Oracle-Linux-${var.compute_os_ver}-.*GPU.*", "Oracle-Linux-${var.compute_os_ver}-.*"]
+    values = ["Oracle-Linux-${var.compute_os_ver}-.*"]
     regex  = true
   }
 

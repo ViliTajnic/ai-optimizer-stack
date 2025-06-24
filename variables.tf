@@ -176,13 +176,13 @@ variable "compute_gpu_shape" {
   }
 }
 
+// VM GPU Configuration
 variable "vm_gpu_enabled" {
   description = "Enable GPU instance instead of CPU instance"
   type        = bool
   default     = false
 }
 
-# Add new variables for better GPU support
 variable "gpu_availability_domain" {
   description = "Specific availability domain for GPU instances (if different from CPU)"
   type        = string
