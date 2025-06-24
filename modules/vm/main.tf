@@ -42,51 +42,50 @@ resource "oci_load_balancer_listener" "server_lb_listener" {
 }
 
 resource "oci_load_balancer_backend" "client_lb_backend" {
+  count            = var.vm_gpu_enabled ? 0 : 1
   load_balancer_id = var.lb_id
   backendset_name  = oci_load_balancer_backend_set.client_lb_backend_set.name
-  ip_address       = oci_core_instance.instance.private_ip
+  ip_address       = oci_core_instance.instance[0].private_ip
   port             = var.streamlit_client_port
 }
 
 resource "oci_load_balancer_backend" "server_lb_backend" {
+  count            = var.vm_gpu_enabled ? 0 : 1
   load_balancer_id = var.lb_id
   backendset_name  = oci_load_balancer_backend_set.server_lb_backend_set.name
-  ip_address       = oci_core_instance.instance.private_ip
+  ip_address       = oci_core_instance.instance[0].private_ip
   port             = var.fastapi_server_port
 }
 
 // Compute Instance
 resource "oci_core_instance" "instance" {
+  count               = var.vm_gpu_enabled ? 0 : 1
   compartment_id      = var.compartment_id
-  display_name        = format("%s-compute", var.label_prefix)
   availability_domain = var.availability_domains[0]
-  shape = var.vm_gpu_enabled ? var.compute_gpu_shape : var.compute_cpu_shape
+  display_name        = format("%s-cpu-instance", var.label_prefix)
+  shape               = var.compute_cpu_shape
+
   shape_config {
-    memory_in_gbs = var.compute_cpu_ocpu * 16
     ocpus         = var.compute_cpu_ocpu
+    memory_in_gbs = var.compute_cpu_ocpu * 16
   }
+
   source_details {
     source_type             = "image"
     source_id               = data.oci_core_images.images.images[0].id
     boot_volume_size_in_gbs = 50
   }
-  agent_config {
-    are_all_plugins_disabled = false
-    is_management_disabled   = false
-    is_monitoring_disabled   = false
-    plugins_config {
-      desired_state = "ENABLED"
-      name          = "Bastion"
-    }
-  }
+
   create_vnic_details {
     subnet_id        = var.private_subnet_id
     assign_public_ip = false
     nsg_ids          = [oci_core_network_security_group.compute.id]
   }
+
   metadata = {
-    user_data = "${base64encode(local.cloud_init)}"
+    user_data = base64encode(local.cloud_init)
   }
+
   lifecycle {
     create_before_destroy = true
     ignore_changes        = [source_details.0.source_id, defined_tags]
