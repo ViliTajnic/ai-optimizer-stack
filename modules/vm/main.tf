@@ -2,7 +2,7 @@
 # All rights reserved. The Universal Permissive License (UPL), Version 1.0 as shown at http://oss.oracle.com/licenses/upl
 # spell-checker: disable
 
-// Loadbalancer Backend Sets
+// Load Balancer Backend Sets
 resource "oci_load_balancer_backend_set" "client_lb_backend_set" {
   load_balancer_id = var.lb_id
   name             = format("%s-client-lb-backend-set", var.label_prefix)
