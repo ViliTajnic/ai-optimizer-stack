@@ -32,7 +32,7 @@ data "oci_load_balancer_load_balancers" "all_lb" {
 }
 
 data "oci_limits_limit_values" "gpu_ad_limits" {
-  compartment_id = var.tenancy_ocid
+  compartment_id = var.tenancy_id
   service_name   = "compute"
   scope_type     = "AD"
   name           = "gpu-a10-count"

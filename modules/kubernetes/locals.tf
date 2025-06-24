@@ -19,7 +19,7 @@ locals {
     label                    = var.label_prefix
     server_repository        = local.server_repository
     client_repository        = local.client_repository
-    oci_tenancy              = var.tenancy_ocid
+    oci_tenancy              = var.tenancy_id
     oci_region               = var.region
     adb_ocid                 = var.adb_id
     adb_name                 = lower(var.adb_name)

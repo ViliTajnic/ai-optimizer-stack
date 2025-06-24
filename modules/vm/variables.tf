@@ -3,8 +3,7 @@
 # spell-checker: disable
 
 variable "tenancy_id" {
-  description = "Tenancy OCID"
-  type        = string
+  type = string
 }
 
 variable "compartment_id" {
@@ -95,12 +94,6 @@ variable "compute_gpu_shape" {
   description = "The shape of the GPU instance"
   type        = string
 }
-
-variable "tenancy_ocid" {
-  description = "The OCID of the tenancy."
-  type        = string
-}
-
 
 /*
 variable "ssh_public_key" {

@@ -82,7 +82,6 @@ module "vm" {
   # count                 = var.infrastructure == "VM" ? 1 : 0
   source                = "./modules/vm"
   label_prefix          = local.label_prefix
-  # tenancy_id          = var.tenancy_ocid
   tenancy_id            = var.tenancy_ocid
   compartment_id        = local.compartment_ocid
   vcn_id                = module.network.vcn_ocid

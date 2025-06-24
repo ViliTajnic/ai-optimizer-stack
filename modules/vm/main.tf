@@ -2,12 +2,10 @@
 # All rights reserved. The Universal Permissive License (UPL), Version 1.0 as shown at http://oss.oracle.com/licenses/upl
 # spell-checker: disable
 
-# ---------------------------------------------
-# Load Balancer Backend Sets
-# ---------------------------------------------
-resource "oci_load_balancer_backend_set" "cli_lb_bset" {
+// Loadbalancer
+resource "oci_load_balancer_backend_set" "client_lb_backend_set" {
   load_balancer_id = var.lb_id
-  name             = format("%s-cli-lb-set", var.label_prefix)
+  name             = format("%s-client-lb-backend-set", var.label_prefix)
   policy           = "LEAST_CONNECTIONS"
   health_checker {
     port     = var.streamlit_client_port
@@ -16,9 +14,9 @@ resource "oci_load_balancer_backend_set" "cli_lb_bset" {
   }
 }
 
-resource "oci_load_balancer_backend_set" "srv_lb_bset" {
+resource "oci_load_balancer_backend_set" "server_lb_backend_set" {
   load_balancer_id = var.lb_id
-  name             = format("%s-srv-lb-set", var.label_prefix)
+  name             = format("%s-server-lb-backend-set", var.label_prefix)
   policy           = "LEAST_CONNECTIONS"
   health_checker {
     port     = var.fastapi_server_port
@@ -27,34 +25,42 @@ resource "oci_load_balancer_backend_set" "srv_lb_bset" {
   }
 }
 
-# ---------------------------------------------
-# Load Balancer Backends (Only for CPU Instances)
-# ---------------------------------------------
-resource "oci_load_balancer_backend" "cli_lb_backend" {
-  count             = var.vm_gpu_enabled ? 0 : 1
-  load_balancer_id  = var.lb_id
-  backendset_name   = oci_load_balancer_backend_set.cli_lb_bset.name
-  ip_address        = oci_core_instance.instance[count.index].private_ip
-  port              = var.streamlit_client_port
+resource "oci_load_balancer_listener" "client_lb_listener" {
+  load_balancer_id         = var.lb_id
+  name                     = format("%s-client-lb-listener", var.label_prefix)
+  default_backend_set_name = oci_load_balancer_backend_set.client_lb_backend_set.name
+  port                     = var.lb_client_port
+  protocol                 = "HTTP"
 }
 
-resource "oci_load_balancer_backend" "srv_lb_backend" {
-  count             = var.vm_gpu_enabled ? 0 : 1
-  load_balancer_id  = var.lb_id
-  backendset_name   = oci_load_balancer_backend_set.srv_lb_bset.name
-  ip_address        = oci_core_instance.instance[count.index].private_ip
-  port              = var.fastapi_server_port
+resource "oci_load_balancer_listener" "server_lb_listener" {
+  load_balancer_id         = var.lb_id
+  name                     = format("%s-server-lb-listener", var.label_prefix)
+  default_backend_set_name = oci_load_balancer_backend_set.server_lb_backend_set.name
+  port                     = var.lb_server_port
+  protocol                 = "HTTP"
 }
 
-# ---------------------------------------------
-# Compute Instance (CPU)
-# ---------------------------------------------
+resource "oci_load_balancer_backend" "client_lb_backend" {
+  load_balancer_id = var.lb_id
+  backendset_name  = oci_load_balancer_backend_set.client_lb_backend_set.name
+  ip_address       = oci_core_instance.instance.private_ip
+  port             = var.streamlit_client_port
+}
+
+resource "oci_load_balancer_backend" "server_lb_backend" {
+  load_balancer_id = var.lb_id
+  backendset_name  = oci_load_balancer_backend_set.server_lb_backend_set.name
+  ip_address       = oci_core_instance.instance.private_ip
+  port             = var.fastapi_server_port
+}
+
+// Compute Instance
 resource "oci_core_instance" "instance" {
-  count               = var.vm_gpu_enabled ? 0 : 1
   compartment_id      = var.compartment_id
   display_name        = format("%s-compute", var.label_prefix)
   availability_domain = var.availability_domains[0]
-  shape               = var.compute_cpu_shape
+  shape = var.vm_gpu_enabled ? var.compute_gpu_shape : var.compute_cpu_shape
   shape_config {
     memory_in_gbs = var.compute_cpu_ocpu * 16
     ocpus         = var.compute_cpu_ocpu
@@ -79,7 +85,7 @@ resource "oci_core_instance" "instance" {
     nsg_ids          = [oci_core_network_security_group.compute.id]
   }
   metadata = {
-    user_data = base64encode(local.cloud_init)
+    user_data = "${base64encode(local.cloud_init)}"
   }
   lifecycle {
     create_before_destroy = true
@@ -87,10 +93,8 @@ resource "oci_core_instance" "instance" {
   }
 }
 
-# ---------------------------------------------
-# Compute Instance (GPU)
-# ---------------------------------------------
-resource "oci_core_instance" "gpuinst" {
+// GPU Instance
+resource "oci_core_instance" "gpu_instance" {
   count               = var.vm_gpu_enabled ? 1 : 0
   availability_domain = var.availability_domain
   compartment_id      = var.compartment_id
@@ -102,6 +106,7 @@ resource "oci_core_instance" "gpuinst" {
   }
 
   metadata = {
+    #ssh_authorized_keys = var.ssh_public_key
     user_data = base64encode(<<-EOT
       #!/bin/bash
       yum -y install kernel-devel-$(uname -r) gcc make
@@ -115,7 +120,9 @@ resource "oci_core_instance" "gpuinst" {
 
   source_details {
     source_type = "image"
+    # image_id    = "<INSERT_GPU_IMAGE_OCID>"
   }
 
   display_name = "gpu-instance-ai-optimizer"
 }
+
