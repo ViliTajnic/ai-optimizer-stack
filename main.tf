@@ -82,8 +82,8 @@ module "vm" {
   
   source                = "./modules/vm"
   label_prefix          = local.label_prefix
-  tenancy_id            = var.tenancy_ocid
-  compartment_id        = local.compartment_ocid
+  tenancy_ocid          = var.tenancy_ocid
+  compartment_ocid      = local.compartment_ocid
   vcn_id                = module.network.vcn_ocid
   lb_id                 = oci_load_balancer_load_balancer.lb.id
   lb_client_port        = local.lb_client_port
