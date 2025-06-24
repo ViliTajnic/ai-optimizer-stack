@@ -36,7 +36,6 @@ variable "adb_name" {
 
 variable "adb_password" {
   type = string
-  sensitive = true
 }
 
 variable "streamlit_client_port" {
@@ -98,59 +97,4 @@ variable "gpu_subnet_id" {
   description = "Specific subnet for GPU instances"
   type        = string
   default     = ""
-}
-
-# New GPU-specific variables
-variable "gpu_driver_version" {
-  description = "NVIDIA driver version to install"
-  type        = string
-  default     = "latest"
-}
-
-variable "cuda_version" {
-  description = "CUDA version to install"
-  type        = string
-  default     = "12.4"
-}
-
-variable "pytorch_cuda_version" {
-  description = "PyTorch CUDA version compatibility"
-  type        = string
-  default     = "cu121"
-}
-
-variable "ollama_gpu_layers" {
-  description = "Number of GPU layers for Ollama"
-  type        = number
-  default     = 999
-}
-
-variable "enable_gpu_monitoring" {
-  description = "Enable GPU monitoring and logging"
-  type        = bool
-  default     = true
-}
-
-variable "default_embedding_model" {
-  description = "Default embedding model"
-  type        = string
-  default     = "mxbai-embed-large"
-}
-
-variable "default_chat_model" {
-  description = "Default chat model"
-  type        = string
-  default     = "llama3.1"
-}
-
-variable "enable_cuda_cache" {
-  description = "Enable CUDA compilation cache"
-  type        = bool
-  default     = true
-}
-
-variable "gpu_boot_volume_size" {
-  description = "Boot volume size for GPU instances (GB)"
-  type        = number
-  default     = 200
 }

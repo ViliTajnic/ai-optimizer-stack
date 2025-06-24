@@ -171,14 +171,8 @@ variable "compute_gpu_shape" {
   type        = string
   default     = "VM.GPU.A10.1"
   validation {
-    condition = contains([
-      "VM.GPU.A10.1", 
-      "VM.GPU.A10.2", 
-      "VM.GPU3.1", 
-      "VM.GPU3.2", 
-      "VM.GPU3.4"
-    ], var.compute_gpu_shape)
-    error_message = "Must be a valid GPU shape: VM.GPU.A10.1, VM.GPU.A10.2, VM.GPU3.1, VM.GPU3.2, or VM.GPU3.4."
+    condition     = contains(["VM.GPU.A10.1", "VM.GPU.A10.2"], var.compute_gpu_shape)
+    error_message = "Must be either VM.GPU.A10.1, or VM.GPU.A10.2."
   }
 }
 
@@ -199,65 +193,6 @@ variable "gpu_subnet_id" {
   description = "Specific subnet for GPU instances (if different from CPU)"
   type        = string
   default     = ""
-}
-
-// GPU-specific variables for enhanced configuration
-variable "gpu_driver_version" {
-  description = "NVIDIA driver version to install (latest recommended)"
-  type        = string
-  default     = "latest"
-}
-
-variable "cuda_version" {
-  description = "CUDA version to install"
-  type        = string
-  default     = "12.4"
-}
-
-variable "pytorch_cuda_version" {
-  description = "PyTorch CUDA version (must match CUDA installation)"
-  type        = string
-  default     = "cu121"  # CUDA 12.1 compatible
-}
-
-variable "enable_gpu_monitoring" {
-  description = "Enable GPU monitoring and logging"
-  type        = bool
-  default     = true
-}
-
-variable "ollama_gpu_layers" {
-  description = "Number of layers to offload to GPU for Ollama"
-  type        = number
-  default     = 999  # Use all available GPU layers
-}
-
-variable "gpu_boot_volume_size" {
-  description = "Boot volume size in GB for GPU instances"
-  type        = number
-  default     = 200
-  validation {
-    condition     = var.gpu_boot_volume_size >= 150
-    error_message = "GPU boot volume must be at least 150 GB for CUDA, drivers, and models."
-  }
-}
-
-variable "default_embedding_model" {
-  description = "Default embedding model for AI Optimizer"
-  type        = string
-  default     = "mxbai-embed-large"
-}
-
-variable "default_chat_model" {
-  description = "Default chat model for AI Optimizer"  
-  type        = string
-  default     = "llama3.1"
-}
-
-variable "enable_cuda_cache" {
-  description = "Enable CUDA compilation cache for better performance"
-  type        = bool
-  default     = true
 }
 
 // Kubernetes Variables (Required by modules)

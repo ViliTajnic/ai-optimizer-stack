@@ -42,7 +42,7 @@ resource "oci_load_balancer_listener" "server_lb_listener" {
   protocol                 = "HTTP"
 }
 
-// CPU Instance (when GPU is disabled)
+// Compute Instance - CPU Only (when GPU is disabled)
 resource "oci_core_instance" "cpu_instance" {
   count               = var.vm_gpu_enabled ? 0 : 1
   compartment_id      = var.compartment_ocid
@@ -65,10 +65,9 @@ resource "oci_core_instance" "cpu_instance" {
   }
 
   create_vnic_details {
-    subnet_id                 = var.private_subnet_id
-    assign_public_ip          = false
-    assign_private_dns_record = true
-    nsg_ids                   = [oci_core_network_security_group.compute.id]
+    subnet_id        = var.private_subnet_id
+    assign_public_ip = false
+    nsg_ids          = [oci_core_network_security_group.compute.id]
   }
 
   metadata = {
@@ -81,11 +80,11 @@ resource "oci_core_instance" "cpu_instance" {
   }
 }
 
-// GPU Instance (when GPU is enabled)
+// Compute Instance - GPU Only (when GPU is enabled)
 resource "oci_core_instance" "gpu_instance" {
   count               = var.vm_gpu_enabled ? 1 : 0
   compartment_id      = var.compartment_ocid
-  availability_domain = local.selected_availability_domain
+  availability_domain = var.gpu_availability_domain != "" ? var.gpu_availability_domain : var.availability_domains[0]
   display_name        = format("%s-gpu-instance", var.label_prefix)
   shape               = var.compute_shape
 
@@ -93,41 +92,18 @@ resource "oci_core_instance" "gpu_instance" {
 
   source_details {
     source_type             = "image"
-    source_id               = local.selected_image_id
-    boot_volume_size_in_gbs = var.gpu_boot_volume_size
+    source_id               = data.oci_core_images.gpu_images.images[0].id
+    boot_volume_size_in_gbs = 100
   }
 
   create_vnic_details {
-    subnet_id                 = var.gpu_subnet_id != "" ? var.gpu_subnet_id : var.private_subnet_id
-    assign_public_ip          = false
-    assign_private_dns_record = true
-    nsg_ids                   = [oci_core_network_security_group.compute.id]
+    subnet_id        = var.gpu_subnet_id != "" ? var.gpu_subnet_id : var.private_subnet_id
+    assign_public_ip = false
+    nsg_ids          = [oci_core_network_security_group.compute.id]
   }
 
   metadata = {
     user_data = base64encode(local.gpu_cloud_init)
-  }
-
-  # Add dedicated volume for models and data if needed
-  provisioner "remote-exec" {
-    inline = [
-      "echo 'GPU instance provisioned successfully'",
-      "# Wait for cloud-init to complete",
-      "cloud-init status --wait || echo 'Cloud-init completed with warnings'",
-      "# Verify GPU setup",
-      "nvidia-smi || echo 'NVIDIA driver not yet available'",
-    ]
-    
-    connection {
-      type        = "ssh"
-      user        = "opc"
-      host        = self.private_ip
-      private_key = file("~/.ssh/id_rsa")  # Adjust path as needed
-      timeout     = "10m"
-      
-      # Connection through bastion or VPN would be needed since this is private
-      # This is just an example - adjust for your networking setup
-    }
   }
 
   lifecycle {
