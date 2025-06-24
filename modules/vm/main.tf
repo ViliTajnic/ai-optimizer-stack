@@ -57,17 +57,20 @@ resource "oci_load_balancer_backend" "server_lb_backend" {
   port             = var.fastapi_server_port
 }
 
-// Compute Instance
-resource "oci_core_instance" "instance" {
+// Compute Instance - CPU Only (when GPU is disabled)
+resource "oci_core_instance" "cpu_instance" {
   count               = var.vm_gpu_enabled ? 0 : 1
   compartment_id      = var.compartment_id
   availability_domain = var.availability_domains[0]
   display_name        = format("%s-cpu-instance", var.label_prefix)
-  shape               = var.compute_cpu_shape
+  shape               = var.compute_shape
 
-  shape_config {
-    ocpus         = var.compute_cpu_ocpu
-    memory_in_gbs = var.compute_cpu_ocpu * 16
+  dynamic "shape_config" {
+    for_each = can(regex("Flex$", var.compute_shape)) ? [1] : []
+    content {
+      ocpus         = var.compute_cpu_ocpu
+      memory_in_gbs = var.compute_cpu_ocpu * 16
+    }
   }
 
   source_details {
@@ -92,36 +95,69 @@ resource "oci_core_instance" "instance" {
   }
 }
 
-// GPU Instance
+// Load Balancer Backends - CPU Instance
+resource "oci_load_balancer_backend" "client_lb_backend_cpu" {
+  count            = var.vm_gpu_enabled ? 0 : 1
+  load_balancer_id = var.lb_id
+  backendset_name  = oci_load_balancer_backend_set.client_lb_backend_set.name
+  ip_address       = oci_core_instance.cpu_instance[0].private_ip
+  port             = var.streamlit_client_port
+}
+
+resource "oci_load_balancer_backend" "server_lb_backend_cpu" {
+  count            = var.vm_gpu_enabled ? 0 : 1
+  load_balancer_id = var.lb_id
+  backendset_name  = oci_load_balancer_backend_set.server_lb_backend_set.name
+  ip_address       = oci_core_instance.cpu_instance[0].private_ip
+  port             = var.fastapi_server_port
+}
+
+// Compute Instance - GPU Only (when GPU is enabled)
 resource "oci_core_instance" "gpu_instance" {
   count               = var.vm_gpu_enabled ? 1 : 0
-  availability_domain = var.availability_domain
   compartment_id      = var.compartment_id
-  shape               = var.compute_gpu_shape
+  availability_domain = var.gpu_availability_domain != "" ? var.gpu_availability_domain : var.availability_domains[0]
+  display_name        = format("%s-gpu-instance", var.label_prefix)
+  shape               = var.compute_shape
+
+  # GPU shapes have fixed configurations - no shape_config block needed
+
+  source_details {
+    source_type             = "image"
+    source_id               = data.oci_core_images.gpu_images.images[0].id
+    boot_volume_size_in_gbs = 100  # Larger boot volume for GPU workloads
+  }
 
   create_vnic_details {
-    subnet_id        = var.subnet_id
-    assign_public_ip = true
+    subnet_id        = var.gpu_subnet_id != "" ? var.gpu_subnet_id : var.private_subnet_id
+    assign_public_ip = false
+    nsg_ids          = [oci_core_network_security_group.compute.id]
   }
 
   metadata = {
-    #ssh_authorized_keys = var.ssh_public_key
-    user_data = base64encode(<<-EOT
-      #!/bin/bash
-      yum -y install kernel-devel-$(uname -r) gcc make
-      cd /tmp
-      curl -O https://us.download.nvidia.com/tesla/525.60.11/NVIDIA-Linux-x86_64-525.60.11.run
-      chmod +x NVIDIA-Linux-x86_64-525.60.11.run
-      ./NVIDIA-Linux-x86_64-525.60.11.run -s
-    EOT
-    )
+    user_data = base64encode(local.gpu_cloud_init)
   }
 
-  source_details {
-    source_type = "image"
-    # image_id    = "<INSERT_GPU_IMAGE_OCID>"
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [source_details.0.source_id, defined_tags]
   }
+}
 
-  display_name = "gpu-instance-ai-optimizer"
+// Load Balancer Backends - GPU Instance
+resource "oci_load_balancer_backend" "client_lb_backend_gpu" {
+  count            = var.vm_gpu_enabled ? 1 : 0
+  load_balancer_id = var.lb_id
+  backendset_name  = oci_load_balancer_backend_set.client_lb_backend_set.name
+  ip_address       = oci_core_instance.gpu_instance[0].private_ip
+  port             = var.streamlit_client_port
+}
+
+resource "oci_load_balancer_backend" "server_lb_backend_gpu" {
+  count            = var.vm_gpu_enabled ? 1 : 0
+  load_balancer_id = var.lb_id
+  backendset_name  = oci_load_balancer_backend_set.server_lb_backend_set.name
+  ip_address       = oci_core_instance.gpu_instance[0].private_ip
+  port             = var.fastapi_server_port
 }
 

@@ -8,7 +8,8 @@ resource "oci_identity_dynamic_group" "compute_dynamic_group" {
   description    = format("%s Dynamic Group - Computes", var.label_prefix)
   matching_rule = format(
     "All {instance.compartment.id = '%s', instance.id = '%s'}",
-    var.compartment_id, oci_core_instance.instance.id
+    var.compartment_id, 
+    var.vm_gpu_enabled ? oci_core_instance.gpu_instance[0].id : oci_core_instance.cpu_instance[0].id
   )
   provider = oci.home_region
 }

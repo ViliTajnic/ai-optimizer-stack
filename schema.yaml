@@ -169,16 +169,20 @@ variables:
 
   compute_cpu_ocpu:
     type: integer
-    title: "CPU Worker Core Count"
+    title: "CPU Core Count"
+    description: "Number of OCPUs for flexible CPU shapes"
     required: true
     minimum: 1
     maximum: 64
     multipleOf: 1
-
-  k8s_node_pool_gpu_deploy:
-    type: boolean
-    title: "Deploy GPU Node Pool?"
-    required: true
+    default: 2
+    visible:
+      and:
+        - eq:
+          - infrastructure
+          - "VM"
+        - not:
+          - vm_gpu_enabled
 
 
   # GPU Shape (Visible when GPU is enabled)
