@@ -57,24 +57,4 @@ locals {
   }, {})
   oke_worker_cpu_image = length(local.oke_worker_images) > 0 ? [
     for key, value in local.oke_worker_images : key if
-    value["image_type"] == "oke" &&
-    value["arch"] == "x86_64" &&
-    value["os_version"] == var.compute_os_ver &&
-    value["k8s_version"] == var.k8s_version &&
-    !value["is_gpu"]
-  ][0] : null
-  //GPU Data
-  oke_worker_gpu_image = length(local.oke_worker_images) > 0 ? [
-    for key, value in local.oke_worker_images : key if
-    value["image_type"] == "oke" &&
-    value["arch"] == "x86_64" &&
-    value["os_version"] == var.compute_os_ver &&
-    value["k8s_version"] == var.k8s_version &&
-    value["is_gpu"]
-  ][0] : null
-  // ADs
-  gpu_availability_domains = [
-    for limit in data.oci_limits_limit_values.gpu_ad_limits.limit_values : limit.availability_domain
-    if tonumber(limit.value) > 0
-  ]
-}
+    value["image_type"] == "

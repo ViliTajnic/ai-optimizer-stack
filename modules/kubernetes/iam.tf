@@ -4,7 +4,7 @@
 
 resource "oci_identity_dynamic_group" "workers_dynamic_group" {
   compartment_id = var.tenancy_id
-  name           = format("%s-worker-dyngrp", var.label_prefix)
+  name           = format("%s-work-dg", var.label_prefix)
   description    = format("%s Workers Dynamic Group", var.label_prefix)
   matching_rule = format(
     "ALL {instance.compartment.id = '%s', tag.Oracle-Tags.CreatedBy.value = '%s'}",
@@ -14,7 +14,7 @@ resource "oci_identity_dynamic_group" "workers_dynamic_group" {
 
 resource "oci_identity_policy" "workers_policies" {
   compartment_id = var.tenancy_id
-  name           = format("%s-workers-policy", var.label_prefix)
+  name           = format("%s-work-policy", var.label_prefix)
   description    = format("%s - K8s Workers", var.label_prefix)
   statements = [
     format("allow any-user to manage autonomous-database-family in compartment id %s where all {request.principal.type = 'workload', request.principal.namespace = 'oracle-database-operator-system', request.principal.service_account = 'default', request.principal.cluster_id = '%s'}", var.compartment_id, oci_containerengine_cluster.default_cluster.id),

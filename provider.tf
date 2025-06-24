@@ -27,7 +27,7 @@ locals {
 
 provider "oci" {
   tenancy_ocid     = var.tenancy_ocid
-  user_ocid        = var.user_ocid
+  user_ocid        = local.user_ocid
   fingerprint      = var.fingerprint
   private_key_path = var.private_key_path
   region           = var.region
@@ -36,8 +36,8 @@ provider "oci" {
 provider "oci" {
   alias            = "home_region"
   tenancy_ocid     = var.tenancy_ocid
-  user_ocid        = var.user_ocid
+  user_ocid        = local.user_ocid
   fingerprint      = var.fingerprint
   private_key_path = var.private_key_path
-  region           = var.region
+  region           = local.home_region
 }

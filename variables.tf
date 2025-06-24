@@ -61,12 +61,12 @@ variable "infrastructure" {
 }
 
 variable "label_prefix" {
-  description = "Alpha Numeric (less than 12 characters) string that will be prepended to all resources. Leave blank to auto-generate."
+  description = "Alpha Numeric (less than 8 characters) string that will be prepended to all resources. Leave blank to auto-generate."
   type        = string
   default     = ""
   validation {
-    condition     = can(regex("^[a-zA-Z0-9]*$", var.label_prefix)) || length(var.label_prefix) < 12
-    error_message = "Must be Alpha Numeric and less than 12 characters."
+    condition     = can(regex("^[a-zA-Z0-9]*$", var.label_prefix)) && length(var.label_prefix) <= 8
+    error_message = "Must be Alpha Numeric and 8 characters or less."
   }
 }
 
